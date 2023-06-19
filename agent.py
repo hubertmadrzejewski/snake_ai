@@ -18,7 +18,7 @@ class Agent:
         self.gamma = 0.85  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         self.model = Linear_QNet(7, 256, 3)
-        self.trainer = QTrainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
+        self.trainer = QTrainer(self.model, lr=LEARNING_RATE, gamma=self.gamma)
 
     def get_state(self, game):
 
@@ -91,7 +91,6 @@ class Agent:
 
         return final_move
 
-
 def train():
     plot_scores = []
     plot_mean_scores = []
@@ -134,6 +133,5 @@ def train():
             plot_mean_scores.append(mean_score)
             plot(plot_scores, plot_mean_scores)
 
-
-if (__name__ == '__main__'):
+if __name__ == '__main__':
     train()
