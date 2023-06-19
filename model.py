@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import os
 
 class Linear_QNet(nn.Module):
-    def __init__ (self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
         self.linear1 = nn.Linear(input_size, hidden_size)
         self.linear2 = nn.Linear(hidden_size, output_size)
@@ -27,7 +27,7 @@ class QTrainer:
         self.learning_rate = learning_rate
         self.gamma = gamma
         self.model = model
-        self.optimizer = optim.Adam(model.parameters(), learning_rate = self.learning_rate)
+        self.optimizer = optim.Adam(model.parameters(), learning_rate=self.learning_rate)
         self.criterion = nn.MSELoss()
 
     def train_step(self, state, action, reward, next_state, done):
@@ -48,7 +48,7 @@ class QTrainer:
         # 1. Predicted Q value with current state
         pred = self.model(state)
 
-        target = pred.clone().cuda()
+        target = pred.clone()
         for idx in range(len(done)):
             Q_new = reward[idx]
             if not done[idx]:
