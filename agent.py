@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from sympy import true
 
 from network import Linear_QNet2
 import random
@@ -23,7 +24,7 @@ class Agent:
         self.n_game = 0
         self.memory = deque()  # popleft()
 
-        self.model = Linear_QNet2(7, 256, 3)
+        self.model = Linear_QNet2(11, 256, 3)
         self.model.train()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.01)
         self.loss_fn = nn.MSELoss()
@@ -65,6 +66,12 @@ class Agent:
             dir_u,
             dir_d,
 
+            # Food Location
+            game.food.x < game.head.x,  # food is in left
+            game.food.x > game.head.x,  # food is in right
+            game.food.y < game.head.y,  # food is up
+            game.food.y > game.head.y  # food is down
+
         ]
         return np.array(state, dtype=int)
 
@@ -81,10 +88,10 @@ class Agent:
             mini_sample = memory
 
         state, action, reward, next_state, done = zip(*mini_sample)
-        state = torch.tensor(state, dtype=torch.float)  # [1, ... , 0]
+        state = torch.tensor(np.array(state), dtype=torch.float)  # [1, ... , 0]
         action = torch.tensor(action, dtype=torch.long)  # [1, 0, 0]
         reward = torch.tensor(reward, dtype=torch.float)  # int
-        next_state = torch.tensor(next_state, dtype=torch.float)  # [True, ... , False]
+        next_state = torch.tensor(np.array(next_state), dtype=torch.float)  # [True, ... , False]
         target = reward
         target = reward + self.gamma * torch.max(self.model(next_state), dim=1)[0]
         location = [[x] for x in torch.argmax(action, dim=1).numpy()]
@@ -92,12 +99,13 @@ class Agent:
         pred = self.model(state).gather(1, location)  # [action]
         pred = pred.squeeze(1)
         loss = self.loss_fn(target, pred)
+        self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
     def train_short_memory(self, state, action, reward, next_state, done):
-        state = torch.tensor(state, dtype=torch.float)
-        next_state = torch.tensor(next_state, dtype=torch.float)
+        state = torch.tensor(np.array(state), dtype=torch.float)
+        next_state = torch.tensor(np.array(next_state), dtype=torch.float)
         action = torch.tensor(action, dtype=torch.long)
         reward = torch.tensor(reward, dtype=torch.float)
         target = reward
@@ -112,9 +120,6 @@ class Agent:
         self.optimizer.step()
 
     def plot(self, score, mean_per_game):
-        from IPython import display
-        display.clear_output(wait=True)
-        display.display(plt.gcf())
         plt.clf()
         plt.title('Training...')
         plt.xlabel('Number of Games')
@@ -124,16 +129,17 @@ class Agent:
         plt.ylim(ymin=0)
         plt.text(len(score) - 1, score[-1], str(score[-1]))
         plt.text(len(mean_per_game) - 1, mean_per_game[-1], str(mean_per_game[-1]))
+        plt.pause(0.001)
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
-        self.epsilon = 300 - self.n_game
+        self.epsilon = 500 - self.n_game
         final_move = [0, 0, 0]
         if random.randint(0, 200) < self.epsilon:
             move = random.randint(0, 2)
             final_move[move] = 1
         else:
-            state0 = torch.tensor(state, dtype=torch.float)
+            state0 = torch.tensor(np.array(state), dtype=torch.float)
             prediction = self.model(state0)
             move = torch.argmax(prediction).item()
             final_move[move] = 1
@@ -185,13 +191,16 @@ class DQNAgent_play(object):
             dir_u,
             dir_d,
 
+            # Food Location
+            game.food.x < game.head.x,  # food is in left
+            game.food.x > game.head.x,  # food is in right
+            game.food.y < game.head.y,  # food is up
+            game.food.y > game.head.y  # food is down
+
         ]
         return np.array(state, dtype=int)
 
     def plot(self, score, mean_per_game):
-        from IPython import display
-        display.clear_output(wait=True)
-        display.display(plt.gcf())
         plt.clf()
         plt.title('Training...')
         plt.xlabel('Number of Games')
@@ -201,10 +210,11 @@ class DQNAgent_play(object):
         plt.ylim(ymin=0)
         plt.text(len(score) - 1, score[-1], str(score[-1]))
         plt.text(len(mean_per_game) - 1, mean_per_game[-1], str(mean_per_game[-1]))
+        plt.pause(0.001)
 
     def get_action(self, state):
         final_move = [0, 0, 0]
-        state0 = torch.tensor(state, dtype=torch.float)
+        state0 = torch.tensor(np.array(state), dtype=torch.float)
         prediction = self.model(state0)
         move = torch.argmax(prediction).item()
         final_move[move] += 1
@@ -240,29 +250,22 @@ def train():
 
         # remember
         agent.remember(state_old, final_move, reward, state_new, done)
-        if done:
-            print('training started')
-            # Train long memory,plot result
+        if done == true:
+            # Train long memory, plot result
             game.reset()
-            total_score += score
-            agent.train_long_memory(agent.memory)
-            print('Game', agent.n_game, '      Score:', score)
-            if score > record:
+            agent.n_game += 1
+            agent.train_long_memory(agent.memory)  # Pass agent.memory as the argument
+            if score > record:  # New high score
                 record = score
-                name = 'best_model.pth'.format(score)
-                dir = os.path.join(model_folder_path, name)
-                torch.save(agent.model.state_dict(), dir)
-            print('record: ', record)
+                torch.save(agent.model.state_dict(), 'model.pth')
+            print('Game:', agent.n_game, 'Score:', score, 'Record:', record)
+
             plot_scores.append(score)
-            mean = total_score / agent.n_game
-            plot_mean_scores.append(mean)
+            total_score += score
+            mean_score = total_score / agent.n_game
+            plot_mean_scores.append(mean_score)
             agent.plot(plot_scores, plot_mean_scores)
-    plt.ioff()
-    plt.show()
 
 
 if __name__ == "__main__":
-    pygame.display.set_caption('Deep Q Snake!')
-    pygame.init()
-    print('before train()')
     train()

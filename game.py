@@ -11,15 +11,16 @@ font = pygame.font.Font(None, font_size)
 Point = namedtuple('Point', 'x, y')
 
 BLOCK_SIZE = 20
-SPEED = 100
+SPEED = 1000
 WHITE = (255, 255, 255)
 RED = (200, 0, 0)
+GREEN = (0, 200, 0)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
 
 x_array = np.array([12, 8, 3, 14, 9, 5, 1, 6, 7, 10, 15, 0, 13, 4, 2, 11, 7, 10, 8, 3])
-y_array = np.array([9, 2, 5, 7, 4, 1, 0, 6, 4, 8, 10, 3, 1, 9, 2, 7, 10, 5, 0, 3])
+y_array = np.array([3, 2, 5, 7, 4, 1, 0, 6, 4, 8, 10, 3, 1, 9, 2, 7, 10, 5, 0, 3])
 
 x_array_2 = np.array([9, 2, 13, 7, 4, 11, 0, 6, 14, 8, 15, 3, 10, 9, 12, 1, 14, 5, 0, 11])
 y_array_2 = np.array([9, 2, 5, 7, 4, 1, 0, 6, 4, 8, 10, 3, 1, 9, 2, 7, 10, 5, 0, 3])
@@ -50,6 +51,7 @@ class SnakeGameAI:
                       Point(self.head.x - BLOCK_SIZE, self.head.y),
                       Point(self.head.x - (2 * BLOCK_SIZE), self.head.y)]
         self.score = 0
+        self.reward = 0
         self.food = None
         self.superFood = None
         self.food_index = 0
@@ -59,13 +61,14 @@ class SnakeGameAI:
         # Initial game start time and max game time in seconds
         self.game_start_time = time.time()
         self.max_game_time = 30  # Max game time in seconds
-        self.eat_timer = 5
+        self.eat_timer = 3
 
         # time variables
         self.start_time = time.time()
         self.elapsed_time = 0
 
     def _place__food(self):
+
         x1 = x_array[self.food_index] * 20
         y1 = y_array[self.food_index] * 20
         self.food = Point(x1, y1)
@@ -76,15 +79,15 @@ class SnakeGameAI:
         if self.food in self.snake:
             self.score += 1
             self.food_index += 1
-            self.eat_timer += 5
-            self.snake.append(self.food)
+            self.eat_timer += 2
+            #self.snake.append(self.food)
             self._place__food()
 
         if self.superFood in self.snake:
-            self.score += 1
+            self.score += 2
             self.superFood_index += 1
-            self.eat_timer += 5
-            self.snake.append(self.superFood)
+            self.eat_timer += 2
+            #self.snake.append(self.superFood)
             self._place__food()
 
     def play_step(self, action):
@@ -95,16 +98,20 @@ class SnakeGameAI:
                 pygame.quit()
                 quit()
 
-        reward = 0
+
 
         # Check if total game time exceeded
         elapsed_time = time.time() - self.game_start_time
         if elapsed_time > self.max_game_time:
-            return reward, True, self.score
+            print('lol1')
+            self.reward += 100
+            return self.reward, True, self.score
         # Check if total game time or eat time
         elapsed_time = time.time() - self.game_start_time  # czars triennial gry
         if elapsed_time > self.max_game_time or elapsed_time > self.eat_timer:
-            return reward, True, self.score
+            self.reward -= 50
+            print('lol2')
+            return self.reward, True, self.score
 
         # Move
         self._move(action)
@@ -114,23 +121,24 @@ class SnakeGameAI:
         game_over = False
         if self.is_collision():
             game_over = True
-            reward += -15
-            return reward, game_over, self.score
+            self.reward += -15
+            print('lol3')
+            return self.reward, game_over, self.score
 
         # Place new food or just move
         if self.head == self.food:
             self.score += 1
-            reward += 10
+            self.reward += 15
             self.food_index = (self.food_index + 1)
             self.snake.append(self.food)
-            self.eat_timer += 5
+            self.eat_timer += 2
             self._place__food()
         elif self.head == self.superFood:
-            self.score += 1
-            reward += 20
+            self.score += 2
+            self.reward += 25
             self.superFood_index = (self.superFood_index + 1)
             self.snake.append(self.superFood)
-            self.eat_timer += 5
+            self.eat_timer += 2
             self._place__food()
         else:
             self.snake.pop()
@@ -145,10 +153,11 @@ class SnakeGameAI:
         # Check if 5 seconds have passed
         if self.elapsed_time > self.max_game_time or elapsed_time > self.eat_timer:
             game_over = True
-            return game_over, self.score, reward
+            print('lol4')
+            return game_over, self.score, self.reward
 
         # Return game over and display score
-        return game_over, self.score, reward
+        return False, self.score, self.reward
 
     def _update_ui(self, elapsed_time):
         self.display.fill(BLACK)
@@ -156,7 +165,7 @@ class SnakeGameAI:
             pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
             pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x + 4, pt.y + 4, 12, 12))
         pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
-        pygame.draw.rect(self.display, RED, pygame.Rect(self.superFood.x, self.superFood.y, BLOCK_SIZE, BLOCK_SIZE))
+        pygame.draw.rect(self.display, GREEN, pygame.Rect(self.superFood.x, self.superFood.y, BLOCK_SIZE, BLOCK_SIZE))
 
         score_text = "Score: " + str(self.score)
         score_surface = font.render(score_text, True, WHITE)
@@ -213,7 +222,5 @@ class SnakeGameAI:
                 or point.y > self.h - BLOCK_SIZE
                 or point.y < 0
         ):
-            return True
-        if point in self.snake[1:]:
             return True
         return False
