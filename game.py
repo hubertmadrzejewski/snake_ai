@@ -11,18 +11,18 @@ font = pygame.font.Font(None, font_size)
 Point = namedtuple('Point', 'x, y')
 
 BLOCK_SIZE = 20
-SPEED = 20
+SPEED = 100
 WHITE = (255, 255, 255)
 RED = (200, 0, 0)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
 
-x_array = np.array([5, 10, 15, 20, 25, 30, 0, 4, 8, 12, 16, 19, 23, 27, 31, 3, 7, 11, 14, 18])
-y_array = np.array([8, 15, 2, 19, 5, 12, 21, 4, 23, 7, 3, 16, 1, 20, 9, 11, 13, 6, 18, 10])
+x_array = np.array([12, 8, 3, 14, 9, 5, 1, 6, 7, 10, 15, 0, 13, 4, 2, 11, 7, 10, 8, 3])
+y_array = np.array([9, 2, 5, 7, 4, 1, 0, 6, 4, 8, 10, 3, 1, 9, 2, 7, 10, 5, 0, 3])
 
-x_array_2 = np.array([11, 5, 23, 8, 19, 31, 3, 0, 14, 22, 16, 1, 28, 20, 9, 7, 27, 13, 2, 30])
-y_array_2 = np.array([3, 16, 20, 12, 6, 19, 9, 5, 2, 18, 10, 14, 21, 8, 1, 7, 13, 11, 4, 15])
+x_array_2 = np.array([9, 2, 13, 7, 4, 11, 0, 6, 14, 8, 15, 3, 10, 9, 12, 1, 14, 5, 0, 11])
+y_array_2 = np.array([9, 2, 5, 7, 4, 1, 0, 6, 4, 8, 10, 3, 1, 9, 2, 7, 10, 5, 0, 3])
 
 
 class Direction(Enum):
@@ -33,7 +33,7 @@ class Direction(Enum):
 
 
 class SnakeGameAI:
-    def __init__(self, w=640, h=480):
+    def __init__(self, w=320, h=240):
         self.action = None
         self.w = w
         self.h = h
@@ -42,7 +42,6 @@ class SnakeGameAI:
         self.clock = pygame.time.Clock()
         self.reset()
         self.frame_iteration = 0
-
 
     def reset(self):
         self.direction = Direction.RIGHT
@@ -65,6 +64,7 @@ class SnakeGameAI:
         # time variables
         self.start_time = time.time()
         self.elapsed_time = 0
+
     def _place__food(self):
         x1 = x_array[self.food_index] * 20
         y1 = y_array[self.food_index] * 20
@@ -87,8 +87,6 @@ class SnakeGameAI:
             self.snake.append(self.superFood)
             self._place__food()
 
-
-
     def play_step(self, action):
         self.frame_iteration += 1
         # Collect the user input
@@ -109,7 +107,7 @@ class SnakeGameAI:
             return reward, True, self.score
 
         # Move
-        self._move(self.action)
+        self._move(action)
         self.snake.insert(0, self.head)
 
         # Check if game over
@@ -141,7 +139,7 @@ class SnakeGameAI:
         self._update_ui(elapsed_time)
         self.clock.tick(SPEED)
 
-        #Calculate elapsed time
+        # Calculate elapsed time
         self.elapsed_time = time.time() - self.start_time
 
         # Check if 5 seconds have passed
@@ -182,14 +180,14 @@ class SnakeGameAI:
         clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
         idx = clock_wise.index(self.direction)
 
-        if np.array_equal(action, [1,0,0]):
-            new_dir = clock_wise[idx] #no change
-        elif np.array_equal(action, [0,1,0]):
+        if np.array_equal(action, [1, 0, 0]):
+            new_dir = clock_wise[idx]  # no change
+        elif np.array_equal(action, [0, 1, 0]):
             next_idx = (idx + 1) % 4
-            new_dir = clock_wise[next_idx] # right turn r -> d -> l -> u
-        else: # [0, 0, 1}
+            new_dir = clock_wise[next_idx]  # right turn r -> d -> l -> u
+        else:  # [0, 0, 1}
             next_idx = (idx - 1) % 4
-            new_dir = clock_wise[next_idx] # left turn r -> u -> l -> d
+            new_dir = clock_wise[next_idx]  # left turn r -> u -> l -> d
 
         self.direction = new_dir
 

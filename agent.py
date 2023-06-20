@@ -25,7 +25,7 @@ class Agent:
 
         self.model = Linear_QNet2(7, 256, 3)
         self.model.train()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.01)
         self.loss_fn = nn.MSELoss()
 
     def get_state(self, game):
@@ -127,7 +127,7 @@ class Agent:
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
-        self.epsilon = 250 - self.n_game
+        self.epsilon = 300 - self.n_game
         final_move = [0, 0, 0]
         if random.randint(0, 200) < self.epsilon:
             move = random.randint(0, 2)
@@ -137,7 +137,6 @@ class Agent:
             prediction = self.model(state0)
             move = torch.argmax(prediction).item()
             final_move[move] = 1
-        print(final_move)
         return final_move
 
 
