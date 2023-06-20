@@ -34,6 +34,7 @@ class Direction(Enum):
 
 class SnakeGameAI:
     def __init__(self, w=640, h=480):
+        self.action = None
         self.w = w
         self.h = h
         self.display = pygame.display.set_mode((self.w, self.h))
@@ -96,23 +97,22 @@ class SnakeGameAI:
                 pygame.quit()
                 quit()
 
+        reward = 0
 
         # Check if total game time exceeded
         elapsed_time = time.time() - self.game_start_time
         if elapsed_time > self.max_game_time:
-            return True, self.score
-
+            return reward, True, self.score
         # Check if total game time or eat time
         elapsed_time = time.time() - self.game_start_time  # czars triennial gry
         if elapsed_time > self.max_game_time or elapsed_time > self.eat_timer:
-            return True, self.score
+            return reward, True, self.score
 
         # Move
         self._move(self.action)
         self.snake.insert(0, self.head)
 
         # Check if game over
-        reward = 0
         game_over = False
         if self.is_collision():
             game_over = True
@@ -147,7 +147,7 @@ class SnakeGameAI:
         # Check if 5 seconds have passed
         if self.elapsed_time > self.max_game_time or elapsed_time > self.eat_timer:
             game_over = True
-            return game_over, self.score
+            return game_over, self.score, reward
 
         # Return game over and display score
         return game_over, self.score, reward
