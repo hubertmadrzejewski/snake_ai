@@ -33,6 +33,7 @@ class Direction(Enum):
 
 
 class SnakeGameAI:
+
     def __init__(self, w=640, h=480):
         self.w = w
         self.h = h
@@ -41,7 +42,6 @@ class SnakeGameAI:
         self.clock = pygame.time.Clock()
         self.reset()
         self.frame_iteration = 0
-
 
     def reset(self):
         self.direction = Direction.RIGHT
@@ -64,6 +64,7 @@ class SnakeGameAI:
         # time variables
         self.start_time = time.time()
         self.elapsed_time = 0
+
     def _place__food(self):
         x1 = x_array[self.food_index] * 20
         y1 = y_array[self.food_index] * 20
@@ -86,8 +87,6 @@ class SnakeGameAI:
             self.snake.append(self.superFood)
             self._place__food()
 
-
-
     def play_step(self, action):
         self.frame_iteration += 1
         # Collect the user input
@@ -95,7 +94,6 @@ class SnakeGameAI:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-
 
         # Check if total game time exceeded
         elapsed_time = time.time() - self.game_start_time
@@ -141,7 +139,7 @@ class SnakeGameAI:
         self._update_ui(elapsed_time)
         self.clock.tick(SPEED)
 
-        #Calculate elapsed time
+        # Calculate elapsed time
         self.elapsed_time = time.time() - self.start_time
 
         # Check if 5 seconds have passed
@@ -182,14 +180,14 @@ class SnakeGameAI:
         clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
         idx = clock_wise.index(self.direction)
 
-        if np.array_equal(action, [1,0,0]):
-            new_dir = clock_wise[idx] #no change
-        elif np.array_equal(action, [0,1,0]):
+        if np.array_equal(action, [1, 0, 0]):
+            new_dir = clock_wise[idx]  # no change
+        elif np.array_equal(action, [0, 1, 0]):
             next_idx = (idx + 1) % 4
-            new_dir = clock_wise[next_idx] # right turn r -> d -> l -> u
-        else: # [0, 0, 1}
+            new_dir = clock_wise[next_idx]  # right turn r -> d -> l -> u
+        else:  # [0, 0, 1}
             next_idx = (idx - 1) % 4
-            new_dir = clock_wise[next_idx] # left turn r -> u -> l -> d
+            new_dir = clock_wise[next_idx]  # left turn r -> u -> l -> d
 
         self.direction = new_dir
 
