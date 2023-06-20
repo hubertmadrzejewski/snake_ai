@@ -8,7 +8,6 @@ import random
 import os
 import pygame
 import numpy as np
-from model import Linear_QNet, QTrainer
 from collections import deque
 from game import SnakeGameAI, Direction, Point, BLOCK_SIZE
 import matplotlib.pyplot as plt
