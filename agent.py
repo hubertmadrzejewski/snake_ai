@@ -23,7 +23,7 @@ class Agent:
         self.n_game = 0
         self.memory = deque()  # popleft()
 
-        self.model = Linear_QNet2(11, 256, 3)
+        self.model = Linear_QNet2(15, 256, 3)
         self.model.train()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.01)
         self.loss_fn = nn.MSELoss()
@@ -69,7 +69,13 @@ class Agent:
             game.food.x < game.head.x,  # food is in left
             game.food.x > game.head.x,  # food is in right
             game.food.y < game.head.y,  # food is up
-            game.food.y > game.head.y  # food is down
+            game.food.y > game.head.y,   # food is down
+
+            # Food Location
+            game.food.x < game.head.x,  # superFood is in left
+            game.superFood.x > game.head.x,  # superFood is in right
+            game.superFood.y < game.head.y,  # superFood is up
+            game.superFood.y > game.head.y  # superFood is down
 
         ]
         return np.array(state, dtype=int)
@@ -132,9 +138,9 @@ class Agent:
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
-        self.epsilon = 500 - self.n_game
+        self.epsilon = 100 - self.n_game
         final_move = [0, 0, 0]
-        if random.randint(0, 200) < self.epsilon:
+        if random.randint(0, 250) < self.epsilon:
             move = random.randint(0, 2)
             final_move[move] = 1
         else:
@@ -149,7 +155,7 @@ class DQNAgent_play(object):
 
     def __init__(self, path):
         self.counter_games = 0
-        self.model = Linear_QNet2(11, 256, 3)
+        self.model = Linear_QNet2(15, 256, 3)
         self.model.load_state_dict(torch.load(path))
         self.model.eval()
 
@@ -194,7 +200,13 @@ class DQNAgent_play(object):
             game.food.x < game.head.x,  # food is in left
             game.food.x > game.head.x,  # food is in right
             game.food.y < game.head.y,  # food is up
-            game.food.y > game.head.y  # food is down
+            game.food.y > game.head.y,  # food is down
+
+            # superFood Location
+            game.superFood.x < game.head.x,  # superFood is in left
+            game.superFood.x > game.head.x,  # superFood is in right
+            game.superFood.y < game.head.y,  # superFood is up
+            game.superFood.y > game.head.y  # superFood is down
 
         ]
         return np.array(state, dtype=int)
@@ -257,7 +269,7 @@ def train():
             if score > record:  # New high score
                 record = score
                 torch.save(agent.model.state_dict(), 'model.pth')
-            print('Game:', agent.n_game, 'Score:', score, 'Record:', record)
+            print('Game:', agent.n_game / 2, 'Score:', score, 'Record:', record)
 
             plot_scores.append(score)
             total_score += score

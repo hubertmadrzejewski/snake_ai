@@ -11,7 +11,7 @@ font = pygame.font.Font(None, font_size)
 Point = namedtuple('Point', 'x, y')
 
 BLOCK_SIZE = 20
-SPEED = 1000
+SPEED = 50
 WHITE = (255, 255, 255)
 RED = (200, 0, 0)
 GREEN = (0, 200, 0)
@@ -80,6 +80,7 @@ class SnakeGameAI:
             self.score += 1
             self.food_index += 1
             self.eat_timer += 2
+            self.reward += 100
             #self.snake.append(self.food)
             self._place__food()
 
@@ -87,6 +88,7 @@ class SnakeGameAI:
             self.score += 2
             self.superFood_index += 1
             self.eat_timer += 2
+            self.reward += 200
             #self.snake.append(self.superFood)
             self._place__food()
 
@@ -103,14 +105,12 @@ class SnakeGameAI:
         # Check if total game time exceeded
         elapsed_time = time.time() - self.game_start_time
         if elapsed_time > self.max_game_time:
-            print('lol1')
-            self.reward += 100
+            self.reward += 200
             return self.reward, True, self.score
         # Check if total game time or eat time
         elapsed_time = time.time() - self.game_start_time  # czars triennial gry
-        if elapsed_time > self.max_game_time or elapsed_time > self.eat_timer:
+        if  elapsed_time > self.eat_timer:
             self.reward -= 50
-            print('lol2')
             return self.reward, True, self.score
 
         # Move
@@ -121,21 +121,20 @@ class SnakeGameAI:
         game_over = False
         if self.is_collision():
             game_over = True
-            self.reward += -15
-            print('lol3')
+            self.reward += -50
             return self.reward, game_over, self.score
 
         # Place new food or just move
         if self.head == self.food:
             self.score += 1
-            self.reward += 15
+            self.reward += 100
             self.food_index = (self.food_index + 1)
             self.snake.append(self.food)
             self.eat_timer += 2
             self._place__food()
         elif self.head == self.superFood:
             self.score += 2
-            self.reward += 25
+            self.reward += 200
             self.superFood_index = (self.superFood_index + 1)
             self.snake.append(self.superFood)
             self.eat_timer += 2
